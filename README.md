@@ -25,5 +25,5 @@ the google apps script project.
 ## Disclaimer
 This is a personal project, yet. Feel free to use it or learn from it if you find it useful. 
 However there's no straightforward way to launch the project if you have no prior experience 
-with bot telegrams and google apps script. Maybe in the next few months I'll make a tutorial 
+with telegram bots or google apps script. Maybe in the next few months I'll make a tutorial 
 on how to install it.
