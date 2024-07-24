@@ -6,10 +6,15 @@ const curr_ss_ptr     = gscript_props.getProperty("curr_ss_ptr")
 const curr_s_ptr      = gscript_props.getProperty("curr_s_ptr")
 const income_ptr      = gscript_props.getProperty("income_ptr")
 const outcome_ptr     = gscript_props.getProperty("outcome_ptr")
+const shoplist_ptr    = gscript_props.getProperty("shoplist_ptr")
+const beeper_ss_id    = gscript_props.getProperty("beeper_ss_id")
+const shoplist_s_name = gscript_props.getProperty("shoplist_s_name")
+
 Logger.log("Properties loaded.")
 Logger.log(`income_ptr: ${income_ptr}`)
 Logger.log(`outcome_ptr: ${outcome_ptr}`)
 Logger.log(`folder_id: ${drive_folder_id}`)
+Logger.log(`shoplist_ptr: ${shoplist_ptr}`)
 
 const month = [
   "enero", "febrero", "marzo", "abril",
@@ -39,6 +44,15 @@ function create_monthly_trigger() {
 function create_daily_trigger() {
   ScriptApp.newTrigger("is_21h30")
   .timeBased().atHour(21).nearMinute(30).everyDays(1).create()
+
+  ScriptApp.newTrigger("is17h20")
+  .timeBased().atHour(17).nearMinute(30).everyDays(1).create()
+
+  ScriptApp.newTrigger("is12h03")
+  .timeBased().atHour(12).nearMinute(3).everyDays(1).create()
+
+  ScriptApp.newTrigger("is08h02")
+  .timeBased().atHour(8).nearMinute(2).everyDays(1).create()
 }
 
 
@@ -54,19 +68,88 @@ function is_21h30() {
 }
 
 
+function is_08h02() {
+  var list = get_shoplist()
+
+  if (list.length != 0) {
+    text = "Hay cosas en tu lista de compras!\n"
+    
+    for (let i = 0; i < list.length; i++) {
+      text += "\\+ "+ list[i][0].trim() +"\n"
+    }
+
+    text += "Si ya has comprado todo, usa /shopclear\."
+
+    var users = admins.split(',')
+
+    for (let i = 0; i < users.length; i++) {
+      sendMessage(text, users[i].trim())
+    }
+  }
+
+}
+
+
+function is_12h03() {
+  var list = get_shoplist()
+
+  if (list.length != 0) {
+    text = "No olvides que hay cosas que debes comprar hoy:\n"
+    
+    for (let i = 0; i < list.length; i++) {
+      text += "\\+ "+ list[i][0].trim() +"\n"
+    }
+
+    text += "Si ya has comprado todo, usa /shopclear\."
+
+    var users = admins.split(',')
+
+    for (let i = 0; i < users.length; i++) {
+      sendMessage(text, users[i].trim())
+    }
+  }
+
+}
+
+
+function is_17h20() {
+  var list = get_shoplist()
+
+  if (list.length != 0) {
+    text = "No olvides que hay cosas que debes comprar hoy:\n"
+    
+    for (let i = 0; i < list.length; i++) {
+      text += "\\+ "+ list[i][0].trim() +"\n"
+    }
+
+    text += "Si ya has comprado todo, usa /shopclear\."
+
+    var users = admins.split(',')
+
+    for (let i = 0; i < users.length; i++) {
+      sendMessage(text, users[i].trim())
+    }
+  }
+
+}
+
+
 function is_new_years_eve() {
   var date = new Date();
   var ctrl_ss = SpreadsheetApp.openById(ctrl_ss_id)
   var ctrl_s  = ctrl_ss.getActiveSheet()
+  var curr_spreadsheet = getCurrSS()
 
   if (date.getMonth() === 0) {
-    var curr_spreadsheet = create_new_spreadsheet("balance-"+ date.getFullYear().toString(), drive_folder_id)
+    curr_spreadsheet = create_new_spreadsheet("balance-"+ date.getFullYear().toString(), drive_folder_id)
     ctrl_s.getRange(curr_ss_ptr).setValue(curr_spreadsheet.getId())
     // todo: reporte anual
   }
 
   var curr_sheet = create_new_sheet(month[date.getMonth()], curr_spreadsheet)
   ctrl_s.getRange(curr_s_ptr).setValue(curr_sheet.getName())
+  update_income_ptr("A3", curr_sheet)
+  update_outcome_ptr("E3", curr_sheet)
   // todo: reporte mensual
 }
 

@@ -21,6 +21,7 @@ the google apps script project.
 + [ ] Improve auth.
 + [ ] Create a multiuser support.
 + [ ] Email statisctis to specific email addreeses (supervisors).
++ [x] Shopping list with time-based reminders.
 
 ## Disclaimer
 This is a personal project, yet. Feel free to use it or learn from it if you find it useful. 

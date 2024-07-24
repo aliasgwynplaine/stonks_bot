@@ -27,26 +27,40 @@ function doPost(e) {
   }
 
   const message = processUpdate(updateText, user_id)
-  sendMessage(message, chat_id) 
+  console.log(`r: ${message}.`)
+  if (message === null) sendMessage(`huh?`, chat_id)
+  else sendMessage(message, chat_id) 
 }
 
-function processUpdate(prompt, user_id) {
+function processUpdate(prompt) {
   // here will come the magik!
-  const re = /[+-]?([0-9]*[.])?[0-9]+,.+,?.*/
-  var m = prompt.match(re)
-  Logger.log(m)
+  Logger.log("processing update")
+  const re_expend = /[+-]?([0-9]*[.])?[0-9]+,.+,?.*/
+  var m = prompt.match(re_expend)
 
-  if (m === null) return
+  if (m !== null) return processExpenditure(prompt)
   
-  var n = prompt.split(',')
-  Logger.log(n)
+  const re_shoplist = /\/\bshop(add|clear|list){1}\b(\s)*(\w)*/
+  m = prompt.match(re_shoplist)
+
+  Logger.log("proceding with shoplist processing")
+  if (m !== null) return processShoplist(prompt)
+  Logger.log("returning null")
+
+  return null
+}
+
+
+function processExpenditure(prompt) {
+  var n = prompt.split(',').filter(s => s.length > 0)
+  console.log(n)
   var num = parseFloat(n[0])
   var obs = n[1]
   var tag = n[2]
 
-  Logger.log(num)
-  Logger.log(obs)
-  Logger.log(tag)
+  console.log(num)
+  console.log(obs)
+  console.log(tag)
 
   if (num > 0) {
     insert_income(num, obs, tag)
@@ -60,6 +74,7 @@ function processUpdate(prompt, user_id) {
 
   return "huh?"
 }
+
 
 function verify_privs(user_id) {
   if (user_id.length === 0) return false
@@ -105,7 +120,7 @@ function emailReport(e) {
   //todo: check email using regex
 
   MailApp.sendEmail({
-    to: "gwynplaine@ñ.live",
+    to: "naro.leonrios@gmail.com",
     subject: "Report",
     htmlBody: "parameter: "+ e.parameter+
     "\nparameters: "+e.parameters +
@@ -116,17 +131,17 @@ function emailReport(e) {
 
 function registerWebhook() {
   var webhookurl = url +"/getWebhookInfo"
-  Logger.log(webhookurl)
+  console.log(webhookurl)
   let response = UrlFetchApp.fetch(webhookurl)
   let content = response.getContentText()
   let jsn = JSON.parse(content)
   
   if (!jsn.result || jsn.result.url.trim().length > 0) {
-    Logger.log(jsn)
+    console.log(jsn)
     return
   }
 
-  Logger.log("webhook info done")
+  console.log("webhook info done")
 
   const options = {
     method: 'POST',
@@ -135,30 +150,31 @@ function registerWebhook() {
     },
     muteHttpExceptions: true,
     payload: JSON.stringify({
-      url: ScriptApp.getService().getUrl(),
+      //url: ScriptApp.getService().getUrl(),
+      url: "https://script.google.com/macros/s/AKfycbyHi_pDCjpyXuD2jfsHg67X_k6q_vwnGHSE0wSZrOk2e58b0IThyEP9ZlyOHJJECkBLXg/exec"
     }),
   }
   response = UrlFetchApp.fetch(url+"/setWebhook", options)
   content = response.getContentText()
-  Logger.log(content)
+  console.log(content)
 }
 
 
 function getWebhookInfo() {
   var webhookurl = url +"/getWebhookInfo"
-  Logger.log(webhookurl)
+  console.log(webhookurl)
   let response = UrlFetchApp.fetch(webhookurl)
   let content = response.getContentText()
   let jsn = JSON.parse(content)
-  Logger.log(jsn)
+  console.log(jsn)
 
 }
 
 function delWebhook() {
   var delwebhookurl = url +"/deleteWebhook"
-  Logger.log(delwebhookurl)
+  console.log(delwebhookurl)
   let response = UrlFetchApp.fetch(delwebhookurl)
   let content  = response.getContentText()
   let jsn = JSON.parse(content)
-  Logger.log(jsn)
+  console.log(jsn)
 }

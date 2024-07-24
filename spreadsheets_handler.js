@@ -36,12 +36,14 @@ function create_new_sheet(title, spreadsheet) {
   return sheet
 }
 
+
 function insert_income(raw, obs, tag) {
   var curr_sheet = getCurrSheet()
   var income_cell = curr_sheet.getRange(curr_sheet.getRange(income_ptr).getValue())
   income_cell = insert_entry(raw, obs, tag, income_cell)
   update_income_ptr(income_cell.getA1Notation(), curr_sheet)
 }
+
 
 function insert_outcome(raw, obs, tag) {
   var curr_sheet = getCurrSheet()
@@ -81,7 +83,7 @@ function getCurrSheet() {
 function getCurrSS() {
   var ctrl_ss = SpreadsheetApp.openById(ctrl_ss_id)
   var ctrl_s  = ctrl_ss.getActiveSheet()
-  var curr_spreadsheet = SpreadsheetApp.openById(ctrl_s.getRange(curr_s_ptr))
+  var curr_spreadsheet = SpreadsheetApp.openById(ctrl_s.getRange(curr_ss_ptr).getValue())
   delete ctrl_s
   delete ctrl_ss
 
@@ -105,6 +107,10 @@ function update_income_ptr(v, sheet) {
 
 function update_outcome_ptr(v, sheet) {
   sheet.getRange(outcome_ptr).setValue(v)
+}
+
+function update_ptr_val(ptr, v, sheet) {
+  sheet.getRange(ptr).setValue(v)
 }
 
 
