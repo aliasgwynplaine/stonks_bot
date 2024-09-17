@@ -22,6 +22,8 @@ the google apps script project.
 + [ ] Create a multiuser support.
 + [ ] Email statisctis to specific email addreeses (supervisors).
 + [x] Shopping list with time-based reminders.
++ [ ] Timezone edit
++ [ ] Alarm system
 
 ## Disclaimer
 This is a personal project, yet. Feel free to use it or learn from it if you find it useful. 
