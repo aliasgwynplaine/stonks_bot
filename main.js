@@ -1,20 +1,22 @@
 const gscript_props   = PropertiesService.getScriptProperties()
-const drive_folder_id = gscript_props.getProperty("folder_id")
+const drive_folder_id = gscript_props.getProperty("folder_id") // manual
 const ctrl_ss_id      = gscript_props.getProperty("ctrl_id") // creado con launching()
-const telegram_token  = gscript_props.getProperty("telegram_token")
+const telegram_token  = gscript_props.getProperty("telegram_token") // manual
 const curr_ss_ptr     = gscript_props.getProperty("curr_ss_ptr")
 const curr_s_ptr      = gscript_props.getProperty("curr_s_ptr")
 const income_ptr      = gscript_props.getProperty("income_ptr")
 const outcome_ptr     = gscript_props.getProperty("outcome_ptr")
 const shoplist_ptr    = gscript_props.getProperty("shoplist_ptr")
+const todolist_ptr    = gscript_props.getProperty("todolist_ptr")
 const beeper_ss_id    = gscript_props.getProperty("beeper_ss_id")
 const shoplist_s_name = gscript_props.getProperty("shoplist_s_name")
-
+const todolist_s_name = gscript_props.getProperty("todolist_s_name")
 Logger.log("Properties loaded.")
 Logger.log(`income_ptr: ${income_ptr}`)
 Logger.log(`outcome_ptr: ${outcome_ptr}`)
 Logger.log(`folder_id: ${drive_folder_id}`)
 Logger.log(`shoplist_ptr: ${shoplist_ptr}`)
+
 
 const month = [
   "enero", "febrero", "marzo", "abril",
@@ -27,7 +29,7 @@ const month = [
 function set_triggers() {
   var triggers = ScriptApp.getProjectTriggers()
   Logger.log(triggers)
-  
+
   for (let i = 0; i < triggers.length; i++)
     ScriptApp.deleteTrigger(triggers[i])
 
@@ -45,13 +47,13 @@ function create_daily_trigger() {
   ScriptApp.newTrigger("is_21h30")
   .timeBased().atHour(21).nearMinute(30).everyDays(1).create()
 
-  ScriptApp.newTrigger("is17h20")
+  ScriptApp.newTrigger("is_17h20")
   .timeBased().atHour(17).nearMinute(30).everyDays(1).create()
 
-  ScriptApp.newTrigger("is12h03")
+  ScriptApp.newTrigger("is_12h03")
   .timeBased().atHour(12).nearMinute(3).everyDays(1).create()
 
-  ScriptApp.newTrigger("is08h02")
+  ScriptApp.newTrigger("is_08h02")
   .timeBased().atHour(8).nearMinute(2).everyDays(1).create()
 }
 
@@ -71,14 +73,14 @@ function is_21h30() {
 function is_08h02() {
   var list = get_shoplist()
 
-  if (list.length != 0) {
-    text = "Hay cosas en tu lista de compras!\n"
+  if (list.length !== 0) {
+    text = "Hay cosas en tu lista de compras!\n\n"
     
     for (let i = 0; i < list.length; i++) {
-      text += "\\+ "+ list[i][0].trim() +"\n"
+      text += "+ "+ list[i][0].trim() +"\n"
     }
 
-    text += "Si ya has comprado todo, usa /shopclear\."
+    text += "\nSi ya has comprado todo, usa /shopclear."
 
     var users = admins.split(',')
 
@@ -94,13 +96,13 @@ function is_12h03() {
   var list = get_shoplist()
 
   if (list.length != 0) {
-    text = "No olvides que hay cosas que debes comprar hoy:\n"
+    text = "No olvides que hay cosas que debes comprar hoy:\n\n"
     
     for (let i = 0; i < list.length; i++) {
-      text += "\\+ "+ list[i][0].trim() +"\n"
+      text += "+ "+ list[i][0].trim() +"\n"
     }
 
-    text += "Si ya has comprado todo, usa /shopclear\."
+    text += "\nSi ya has comprado todo, usa /shopclear."
 
     var users = admins.split(',')
 
@@ -119,10 +121,10 @@ function is_17h20() {
     text = "No olvides que hay cosas que debes comprar hoy:\n"
     
     for (let i = 0; i < list.length; i++) {
-      text += "\\+ "+ list[i][0].trim() +"\n"
+      text += "+ "+ list[i][0].trim() +"\n"
     }
 
-    text += "Si ya has comprado todo, usa /shopclear\."
+    text += "\nSi ya has comprado todo, usa /shopclear."
 
     var users = admins.split(',')
 
@@ -178,6 +180,25 @@ function create_ctrl() {
   gscript_props.setProperty("ctrl_id", ctrl_ss.getId())
   DriveApp.getFileById(ctrl_ss.getId()).moveTo(folder)
 }
+
+function create_env() {
+  gscript_props.setProperty("income_ptr", "N1")
+  gscript_props.setProperty("outcome_ptr", "N2")
+}
+
+// todo: email functions
+function emailReport(e) {
+  //todo: check email using regex
+
+  MailApp.sendEmail({
+    to: "naro.leonrios@gmail.com",
+    subject: "Report",
+    htmlBody: "parameter: "+ e.parameter+
+    "\nparameters: "+e.parameters +
+    "\npostData.contents: "+ e.postData.contents
+  });
+}
+
 
 function oldtests() {
   var d = new Date()
