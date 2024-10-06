@@ -1,8 +1,4 @@
-function listadd(prompt, sheet, entry_ptr, entry_cntr) {
-  var idx  = prompt.indexOf(" ")
-  var items = prompt.substring(idx,).split(",")
-  console.log(items)
-  console.log(entry_ptr)
+function listadd(items, sheet, entry_ptr, entry_cntr) {
   var cell = sheet.getRange(sheet.getRange(entry_ptr).getValue())
   var cnt  = parseInt(sheet.getRange(entry_cntr).getValue())
 
@@ -19,12 +15,33 @@ function listadd(prompt, sheet, entry_ptr, entry_cntr) {
   return "agregado"
 }
 
+
+function listdel(sheet, idx, entry_ptr, entry_cntr) {
+  var cell = sheet.getRange(sheet.getRange(entry_ptr).getValue())
+  var cnt  = parseInt(sheet.getRange(entry_cntr).getValue())
+  var v    = sheet.getRange("A1:"+ cell.offset(0,1).getA1Notation()).getValues()
+  v.pop()
+
+  for (let i = 0; i < v.length; i++) {
+    if (v[i][1] == idx) {
+      sheet.deleteRow(i + 1) // row starts at 1
+      update_ptr_val(entry_ptr, cell.offset(-1,0).getA1Notation(), sheet)
+      update_ptr_val(entry_cntr, --cnt, sheet)
+
+      return i + 1
+    }
+  }
+
+  return 0
+}
+
+
 function listclear(sheet, entry_ptr, entry_cntr) {
   update_ptr_val(entry_ptr, "A1", sheet)
   update_ptr_val(entry_cntr, 0, sheet)
   sheet.getRange("A:B").clear()
 
-  return "Lista eliminada. No olvides registrar tus gastos!"
+  return "Lista eliminada."
 }
 
 function showlist(sheet, entry_ptr, title) {
@@ -46,7 +63,7 @@ function showlist(sheet, entry_ptr, title) {
 
 function getrawlist(sheet, entry_ptr) {
   var cell = sheet.getRange(sheet.getRange(entry_ptr).getValue())
-  var list =  sheet.getRange("A1:"+ cell.getA1Notation()).getValues()
+  var list =  sheet.getRange("A1:"+ cell.offset(0,1).getA1Notation()).getValues()
   list.pop()
 
   return list

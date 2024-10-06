@@ -8,54 +8,124 @@ function doPost(e) {
   }
 
   const update   = JSON.parse(e.postData.contents)
-  sendPlainText(update, admins)
-  const chat_id  = update.message.chat.id
-  const user_id  = update.message.from.id
-  const mssg_id  = update.message.message_id
-  const username = update.message.from.username
-  
-  if (!verify_privs(user_id)) {
-    sendMessage(`Sorry. You're not in the list`, chat_id)
-    sendMessage(`@${username} [${user_id}] has knocked the door.`, admins)
+  //sendPlainText(update, admins)
+
+  var message = null
+  var chat_id
+  var user_id
+  var username
+
+  if (update.callback_query) {
+    chat_id  = update.callback_query.message.chat.id
+    user_id  = update.callback_query.from.id
+    username = update.callback_query.from.username
+
+    if (!verify_privs(user_id)) {
+      sendMessage(`Sorry. You're not in the list`, chat_id)
+      sendMessage(`@${username} [${user_id}] has knocked the door.`, admins)
+      return
+    }
+
+    const callback_q = update.callback_query
+
+    const msg = processCallbackQueryUpdate(callback_q, chat_id)
+    if (msg !== null) sendMessage(msg, chat_id)
     return
-  } /*else {
-    sendMessage(`* ${username} [${user_id}], You are in the list!!`, chat_id)
-  }*/
-
-  const updateText = update.message.text
-
-  if (!updateText || updateText.toString().trim().length === 0) {
-    sendMessage(`Huh?`, chat_id)
-    return;
   }
 
-  const message = processUpdate(updateText, mssg_id, user_id)
+  if (update.message){
+    chat_id  = update.message.chat.id
+    user_id  = update.message.from.id
+    mssg_id  = update.message.message_id
+    username = update.message.from.username
+
+    if (!verify_privs(user_id)) {
+      sendMessage(`Sorry. You're not in the list`, chat_id)
+      sendMessage(`@${username} [${user_id}] has knocked the door.`, admins)
+      return
+    } /*else {
+      sendMessage(`* ${username} [${user_id}], You are in the list!!`, chat_id)
+    }*/
+
+    const updateText = update.message.text
+
+    if (!updateText || updateText.toString().trim().length === 0) {
+      sendMessage(`Huh?`, chat_id)
+      return;
+    }
+
+    message = processTextUpdate(updateText, mssg_id, user_id)
+  }
+
   console.log(`r: ${message}.`)
-  if (message === null) sendMessage(`huh?`, chat_id)
+
+  if (message === null) sendMessage("huh?", chat_id)
   else sendMessage(message, chat_id) 
+
 }
 
-function processUpdate(prompt, mssg_id, user_id) {
+function processTextUpdate(prompt, mssg_id, user_id) {
   // here will come the magik!
-  Logger.log("processing update")
+  console.log("processing update")
   const re_expend = /[+-]?([0-9]*[.])?[0-9]+,.+,?.*/
   var m = prompt.match(re_expend)
 
   if (m !== null) return processExpenditure(prompt, mssg_id, user_id)
   
-  const re_shoplist = /\/\bshop(add|clear|list){1}\b(\s)*(\w)*/
+  const re_shoplist = /\/\bshop(add|clear|list|){1}\b(\s)*(\w)*/
   m = prompt.match(re_shoplist)
 
-  Logger.log("proceding with shoplist processing")
-  if (m !== null) return processShoplist(prompt)
+  console.log("proceding with shoplist processing")
+  if (m !== null) {
+    const r = processShoplist(prompt)
 
-  const re_todolist = /\/\btodo(add|clear|list){1}\b(\s)*(\w)*/
+    if (typeof r == 'string') return r
+
+    sendInlineKeyboardMarkup("*Shopping*", r, user_id)
+
+    return "Toca las opciones para eliminarlas!"
+  }
+
+  const re_todolist = /\/\btodo(add|clear|list|){1}\b(\s)*(\w)*/
   m = prompt.match(re_todolist)
 
   Logger.log("proceding with todolist processing")
-  if (m !== null) return processTodolist(prompt)
+  if (m !== null) {
+    const r = processTodolist(prompt)
+
+    if (typeof r == 'string') return r
+
+    sendInlineKeyboardMarkup("*To-do*", r, user_id)
+    
+    return "Toca las opciones para completar las tareas!"
+  }
   Logger.log("returning null")
 
+
+  return null
+}
+
+
+function processCallbackQueryUpdate(callback_query, chat_id) {
+  var idx = parseInt(callback_query.data)
+  var l   = null
+
+  if (callback_query.message.text == "To-do") {
+    tododel(idx)
+    l = todo()
+  }
+
+  if (callback_query.message.text == "Shopping") {
+    shopdel(idx)
+    l = shop()
+  }
+
+  if (typeof l == 'string') {
+    editInlineKeyboardMarkup(callback_query.message.message_id, [], chat_id)
+    return l
+  }
+
+  editInlineKeyboardMarkup(callback_query.message.message_id, l, chat_id)
 
   return null
 }
@@ -112,7 +182,7 @@ function sendPlainText(text, chat_id) {
   const content = response.getContentText()
   
   if (!response.getResponseCode().toString().startsWith('2')) {
-    Logger.log(content);
+    console.log(content);
   }
 
   return ContentService.createTextOutput('OK').setMimeType(
@@ -123,7 +193,7 @@ function sendPlainText(text, chat_id) {
 
 function sendMessage(text, chat_id) {
   //text = hrdcdd_scp_chrs(text)
-  Logger.log(text)
+  console.log(text)
   let parse_mode = "markdown"
   const options = {
     method: 'POST',
@@ -142,6 +212,45 @@ function sendMessage(text, chat_id) {
   const content = response.getContentText()
   
   if (!response.getResponseCode().toString().startsWith('2')) {
+    console.log(content);
+  }
+
+  return ContentService.createTextOutput('OK').setMimeType(
+    ContentService.MimeType.TEXT
+  )
+}
+
+
+ function sendInlineKeyboardMarkup(text, tcl, chat_id) {
+  let parse_mode = "markdown"
+  let buttons    = []
+
+  for (let i = 0; i < tcl.length; i++) {
+    buttons[i] = [{text: tcl[i][0], callback_data: tcl[i][1]}]
+  }
+
+  let reply_markup = {
+    inline_keyboard : buttons
+  }
+
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    muteHttpExceptions: true,
+    payload: JSON.stringify({
+      text,
+      chat_id,
+      parse_mode,
+      reply_markup,
+    }),
+  }
+
+  const response = UrlFetchApp.fetch(url+"/sendMessage", options)
+  const content = response.getContentText()
+  
+  if (!response.getResponseCode().toString().startsWith('2')) {
     Logger.log(content);
   }
 
@@ -150,6 +259,52 @@ function sendMessage(text, chat_id) {
   )
 }
 
+
+function editInlineKeyboardMarkup(message_id, tcl, chat_id) {
+  let parse_mode = "markdown"
+  let buttons    = []
+
+  for (let i = 0; i < tcl.length; i++) {
+    buttons[i] = [{text: tcl[i][0], callback_data: tcl[i][1]}]
+  }
+
+  let reply_markup = {
+    inline_keyboard : buttons
+  }
+
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    muteHttpExceptions: true,
+    payload: JSON.stringify({
+      message_id,
+      chat_id,
+      parse_mode,
+      reply_markup,
+    }),
+  }
+
+  const response = UrlFetchApp.fetch(url+"/editMessageReplyMarkup", options)
+  const content = response.getContentText()
+  
+  if (!response.getResponseCode().toString().startsWith('2')) {
+    Logger.log(content);
+  }
+
+  return ContentService.createTextOutput('OK').setMimeType(
+    ContentService.MimeType.TEXT
+  )
+}
+
+
+function test_sendInlineKeyboardMarkup() {
+  sendInlineKeyboardMarkup("test", admins)
+}
+
+
+// Webhook stuff: 
 function registerWebhook() {
   var webhookurl = url +"/getWebhookInfo"
   console.log(webhookurl)

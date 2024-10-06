@@ -92,3 +92,8 @@ function get_sum_of_the_day() {
 
   return summm.toFixed(2)
 }
+
+
+function test_processExpediture() {
+  sendMessage(processExpenditure("-1, test, test", 0, 0), admins)
+}

@@ -1,0 +1,6 @@
+shop - shows the whole shopping list
+shopadd - add item to the shopping list
+shopclear - clears the shopping list
+todo - shows the whole todo list
+todoadd - add item to the todo list
+todoclear - clears the todo list

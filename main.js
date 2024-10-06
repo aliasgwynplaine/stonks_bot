@@ -49,21 +49,21 @@ function create_monthly_trigger() {
 
 
 function create_daily_trigger() {
-  ScriptApp.newTrigger("is_21h30")
+  ScriptApp.newTrigger("showdaily")
   .timeBased().atHour(21).nearMinute(30).everyDays(1).create()
 
-  ScriptApp.newTrigger("is_17h20")
+  ScriptApp.newTrigger("showshoppinglist")
   .timeBased().atHour(17).nearMinute(30).everyDays(1).create()
 
-  ScriptApp.newTrigger("is_12h03")
+  ScriptApp.newTrigger("showshoppinglist")
   .timeBased().atHour(12).nearMinute(3).everyDays(1).create()
 
-  ScriptApp.newTrigger("is_08h02")
+  ScriptApp.newTrigger("showshoppinglist")
   .timeBased().atHour(8).nearMinute(2).everyDays(1).create()
 }
 
 
-function is_21h30() {
+function showdailyreport() {
   var sumoday = get_sum_of_the_day()
   var text = "*Reporte diario*\n"
   text += "Gasto de hoy: "+ Math.abs(sumoday)
@@ -75,66 +75,18 @@ function is_21h30() {
 }
 
 
-function is_08h02() {
-  var list = get_shoplist()
+function showshoppinglist() {
+  var list = shop()
 
-  if (list.length !== 0) {
-    text = "Hay cosas en tu lista de compras!\n\n"
-    
-    for (let i = 0; i < list.length; i++) {
-      text += "+ "+ list[i][0].trim() +"\n"
-    }
-
+  if (typeof list != 'string') {
+    text = "Hay cosas en tu lista de compras!\n"
     text += "\nSi ya has comprado todo, usa /shopclear."
 
     var users = admins.split(',')
 
     for (let i = 0; i < users.length; i++) {
       sendMessage(text, users[i].trim())
-    }
-  }
-
-}
-
-
-function is_12h03() {
-  var list = get_shoplist()
-
-  if (list.length != 0) {
-    text = "No olvides que hay cosas que debes comprar hoy:\n\n"
-    
-    for (let i = 0; i < list.length; i++) {
-      text += "+ "+ list[i][0].trim() +"\n"
-    }
-
-    text += "\nSi ya has comprado todo, usa /shopclear."
-
-    var users = admins.split(',')
-
-    for (let i = 0; i < users.length; i++) {
-      sendMessage(text, users[i].trim())
-    }
-  }
-
-}
-
-
-function is_17h20() {
-  var list = get_shoplist()
-
-  if (list.length != 0) {
-    text = "No olvides que hay cosas que debes comprar hoy:\n"
-    
-    for (let i = 0; i < list.length; i++) {
-      text += "+ "+ list[i][0].trim() +"\n"
-    }
-
-    text += "\nSi ya has comprado todo, usa /shopclear."
-
-    var users = admins.split(',')
-
-    for (let i = 0; i < users.length; i++) {
-      sendMessage(text, users[i].trim())
+      sendInlineKeyboardMarkup("*Shopping*", list, users[i].trim())
     }
   }
 
