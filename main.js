@@ -8,6 +8,8 @@ const income_ptr      = gscript_props.getProperty("income_ptr")
 const outcome_ptr     = gscript_props.getProperty("outcome_ptr")
 const shoplist_ptr    = gscript_props.getProperty("shoplist_ptr")
 const todolist_ptr    = gscript_props.getProperty("todolist_ptr")
+const shopcntr_ptr    = gscript_props.getProperty("shopcntr_ptr")
+const todocntr_ptr    = gscript_props.getProperty("todocntr_ptr")
 const beeper_ss_id    = gscript_props.getProperty("beeper_ss_id")
 const shoplist_s_name = gscript_props.getProperty("shoplist_s_name")
 const todolist_s_name = gscript_props.getProperty("todolist_s_name")
@@ -16,7 +18,10 @@ Logger.log(`income_ptr: ${income_ptr}`)
 Logger.log(`outcome_ptr: ${outcome_ptr}`)
 Logger.log(`folder_id: ${drive_folder_id}`)
 Logger.log(`shoplist_ptr: ${shoplist_ptr}`)
+Logger.log(`todolist_ptr: ${todolist_ptr}`)
 
+// used in todo.js and shopping.js
+const beeper_ss  = SpreadsheetApp.openById(beeper_ss_id)
 
 const month = [
   "enero", "febrero", "marzo", "abril",

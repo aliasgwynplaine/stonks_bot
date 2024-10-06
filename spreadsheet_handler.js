@@ -39,6 +39,11 @@ function create_new_sheet(title, spreadsheet) {
 }
 
 
+function update_ptr_val(ptr, v, sheet) {
+  sheet.getRange(ptr).setValue(v)
+}
+
+
 function getCurrSheet() {
   var ctrl_ss = SpreadsheetApp.openById(ctrl_ss_id)
   var ctrl_s  = ctrl_ss.getActiveSheet()

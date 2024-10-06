@@ -64,10 +64,6 @@ function update_outcome_ptr(v, sheet) {
   sheet.getRange(outcome_ptr).setValue(v)
 }
 
-function update_ptr_val(ptr, v, sheet) {
-  sheet.getRange(ptr).setValue(v)
-}
-
 
 function getOutcomeCell() {
   var s = getCurrSheet()

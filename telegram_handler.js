@@ -47,13 +47,13 @@ function processUpdate(prompt, mssg_id, user_id) {
   m = prompt.match(re_shoplist)
 
   Logger.log("proceding with shoplist processing")
-  if (m !== null) return processShoplist(prompt, mssg_id, user_id)
+  if (m !== null) return processShoplist(prompt)
 
   const re_todolist = /\/\btodo(add|clear|list){1}\b(\s)*(\w)*/
   m = prompt.match(re_todolist)
 
   Logger.log("proceding with todolist processing")
-  if (m !== null) return processTodolist(prompt, mssg_id, user_id)
+  if (m !== null) return processTodolist(prompt)
   Logger.log("returning null")
 
 
