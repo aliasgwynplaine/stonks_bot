@@ -4,16 +4,26 @@ function processShoplist(prompt) {
   if (prompt.indexOf("/shopadd")   == 0) return shopadd(prompt)
   if (prompt.indexOf("/shopclear") == 0) return shopclear()
   if (prompt.indexOf("/shoplist")  == 0) return shoplist()
-  if (prompt.indexOf("/shop") == 0)      return shop()
+  if (prompt.indexOf("/shop") == 0)      return shop(prompt)
 }
 
-function shop() {
-  let t =  getrawlist(shoplist_s, shoplist_ptr)
 
-  if (t.length == 0) return "*Lista vacía*"
+function shop(prompt) {
+  var idx = prompt.indexOf(" ")
+  
+  if (idx == -1) {
+    let t =  getrawlist(shoplist_s, shoplist_ptr)
 
-  return t
+    if (t.length == 0) return "*Lista vacía*"
+
+    return t
+  }
+
+  var items = prompt.substring(idx, ).trim().split(",")
+
+  return listadd(items, shoplist_s, shoplist_ptr, shopcntr_ptr)
 }
+
 
 function shopadd(prompt) {
   var idx  = prompt.indexOf(" ")

@@ -1,18 +1,21 @@
 function listadd(items, sheet, entry_ptr, entry_cntr) {
   var cell = sheet.getRange(sheet.getRange(entry_ptr).getValue())
   var cnt  = parseInt(sheet.getRange(entry_cntr).getValue())
+  var c    = 0;
 
   for (let i = 0; i < items.length; i++) {
     console.log(items[i])
+    if (items[i].trim().length == 0) continue
     cell.setValue(items[i].trim())
     cell.offset(0, 1).setValue(++cnt)
     cell = cell.offset(1,0)
+    c++;
   }
 
   update_ptr_val(entry_ptr, cell.getA1Notation(), sheet)
   update_ptr_val(entry_cntr, cnt, sheet)
 
-  return "agregado"
+  return `Se agregaron ${c} elementos.`
 }
 
 

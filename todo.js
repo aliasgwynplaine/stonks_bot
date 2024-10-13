@@ -4,17 +4,22 @@ function processTodolist(prompt) {
   if (prompt.indexOf("/todoadd")   == 0) return todoadd(prompt)
   if (prompt.indexOf("/todoclear") == 0) return todoclear()
   if (prompt.indexOf("/todolist")  == 0) return todolist()
-  if (prompt.indexOf("/todo") == 0)      return todo() 
+  if (prompt.indexOf("/todo") == 0)      return todo(prompt)
 }
 
-function todo() {
-  let t =  getrawlist(todolist_s, todolist_ptr)
-  console.log(typeof t)
-  console.log(t)
+function todo(prompt) {
+  var idx   = prompt.indexOf(" ")
+  
+  if (idx == -1) {
+    let t =  getrawlist(todolist_s, todolist_ptr)
 
-  if (t.length == 0) return "*Lista vacía*"
+    if (t.length == 0) return "*Lista vacía*"
 
-  return t
+    return t
+  }
+  
+  var items = prompt.substring(idx, ).split(",")
+  return listadd(items, todolist_s, todolist_ptr, todocntr_ptr)
 }
 
 function todoadd(prompt) {

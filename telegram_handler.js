@@ -60,7 +60,10 @@ function doPost(e) {
   console.log(`r: ${message}.`)
 
   if (message === null) sendMessage("huh?", chat_id)
-  else sendMessage(message, chat_id) 
+  else {
+    if (verbosity == "1") sendMessage(message, chat_id)
+    else setEmojiReaction("👍", mssg_id, chat_id)
+  } 
 
 }
 
@@ -89,7 +92,8 @@ function processTextUpdate(prompt, mssg_id, user_id) {
   const re_todolist = /\/\btodo(add|clear|list|){1}\b(\s)*(\w)*/
   m = prompt.match(re_todolist)
 
-  Logger.log("proceding with todolist processing")
+  console.log("proceding with todolist processing")
+
   if (m !== null) {
     const r = processTodolist(prompt)
 
@@ -99,7 +103,17 @@ function processTextUpdate(prompt, mssg_id, user_id) {
     
     return "Toca las opciones para completar las tareas!"
   }
-  Logger.log("returning null")
+
+  const re_verbosity = /\/\bverbosity\b(\s)*(\w){1}/
+  m = prompt.match(re_verbosity)
+
+  if (m !== null) {
+    idx = prompt.indexOf(" ")
+    user_props.setProperty("verbosity", prompt.substring(idx, ).trim())
+    return "Ok"
+  }
+
+  console.log("returning null")
 
 
   return null
@@ -112,12 +126,12 @@ function processCallbackQueryUpdate(callback_query, chat_id) {
 
   if (callback_query.message.text == "To-do") {
     tododel(idx)
-    l = todo()
+    l = todo("")
   }
 
   if (callback_query.message.text == "Shopping") {
     shopdel(idx)
-    l = shop()
+    l = shop("")
   }
 
   if (typeof l == 'string') {
@@ -291,6 +305,34 @@ function editInlineKeyboardMarkup(message_id, tcl, chat_id) {
   
   if (!response.getResponseCode().toString().startsWith('2')) {
     Logger.log(content);
+  }
+
+  return ContentService.createTextOutput('OK').setMimeType(
+    ContentService.MimeType.TEXT
+  )
+}
+
+
+function setEmojiReaction(react, message_id, chat_id) {
+  // "👍"
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    muteHttpExceptions: true,
+    payload: JSON.stringify({
+      chat_id,
+      message_id,
+      reaction: [{type: "emoji", emoji: react}],
+    }),
+  }
+
+  const response = UrlFetchApp.fetch(url+"/setMessageReaction", options)
+  const content = response.getContentText()
+  
+  if (!response.getResponseCode().toString().startsWith('2')) {
+    console.log(content);
   }
 
   return ContentService.createTextOutput('OK').setMimeType(

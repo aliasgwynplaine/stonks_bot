@@ -1,4 +1,5 @@
 const gscript_props   = PropertiesService.getScriptProperties()
+const user_props      = PropertiesService.getUserProperties()
 const drive_folder_id = gscript_props.getProperty("folder_id") // manual
 const ctrl_ss_id      = gscript_props.getProperty("ctrl_id") // creado con launching()
 const telegram_token  = gscript_props.getProperty("telegram_token") // manual
@@ -13,6 +14,7 @@ const todocntr_ptr    = gscript_props.getProperty("todocntr_ptr")
 const beeper_ss_id    = gscript_props.getProperty("beeper_ss_id")
 const shoplist_s_name = gscript_props.getProperty("shoplist_s_name")
 const todolist_s_name = gscript_props.getProperty("todolist_s_name")
+const verbosity       = user_props.getProperty("verbosity")
 Logger.log("Properties loaded.")
 Logger.log(`income_ptr: ${income_ptr}`)
 Logger.log(`outcome_ptr: ${outcome_ptr}`)
