@@ -1,4 +1,4 @@
-const shoplist_s = beeper_ss.getSheetByName(shoplist_s_name)
+//const shoplist_s = getbeeperss().getSheetByName(shoplist_s_name)
 
 function processShoplist(prompt) {
   if (prompt.indexOf("/shopadd")   == 0) return shopadd(prompt)
@@ -9,6 +9,7 @@ function processShoplist(prompt) {
 
 
 function shop(prompt) {
+  var shoplist_s = getbeeperss().getSheetByName(shoplist_s_name)
   var idx = prompt.indexOf(" ")
   
   if (idx == -1) {
@@ -26,6 +27,7 @@ function shop(prompt) {
 
 
 function shopadd(prompt) {
+  var shoplist_s = getbeeperss().getSheetByName(shoplist_s_name)
   var idx  = prompt.indexOf(" ")
   var items = prompt.substring(idx,).split(",")
 
@@ -33,14 +35,17 @@ function shopadd(prompt) {
 }
 
 function shopdel(idx) {
+  var shoplist_s = getbeeperss().getSheetByName(shoplist_s_name)
   return listdel(shoplist_s, idx, shoplist_ptr, shopcntr_ptr)
 }
 
 function shopclear() {
+  var shoplist_s = getbeeperss().getSheetByName(shoplist_s_name)
   return listclear(shoplist_s, shoplist_ptr, shopcntr_ptr)
 }
 
 function shoplist() {
+  var shoplist_s = getbeeperss().getSheetByName(shoplist_s_name)
   return showlist(shoplist_s, shoplist_ptr, "Lista de compras")
 }
 
@@ -66,4 +71,5 @@ function shoplisttest() {
   sendMessage(processTextUpdate("/shoplist"), admins)
   Logger.log("Done!")
 }
+
 

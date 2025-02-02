@@ -1,82 +1,106 @@
-const url = `https://api.telegram.org/bot${telegram_token}`
-const admins = gscript_props.getProperty("user_admin")
+/**
+ * [ ] dynamic alarm system (caché)
+ * [ ] georef handler
+ */
+
+function doGet(e) {
+  if (!e.parameter) { return; }
+  var path = Object.keys(e.parameter)[0]
+
+  switch (path) {
+    case "delete" :
+      if (e.parameter.delete == passphrase) {
+        sendMessage("calling delWebhook", admins)
+        delWebhook();
+      }
+      break;
+    case "register" :
+      if (e.parameter.register == passphrase) {
+        registerWebhook();
+        sendMessage("webhook was registered", admins)
+      }
+      break;
+    case "getwebhook" :
+      if (e.parameter.getwebhook == passphrase) {
+        sendMessage("calling webHookInfo", admins)
+        getWebhookInfo();
+      }
+      break;
+    default:
+      break;
+  }
+}
 
 
 function doPost(e) {
   if (!e.postData || !e.postData.contents) {
     return;
   }
-
+  
   const update   = JSON.parse(e.postData.contents)
-  //sendPlainText(update, admins)
-
   var message = null
   var chat_id
   var user_id
   var username
+  var t = null;
 
-  if (update.callback_query) {
-    chat_id  = update.callback_query.message.chat.id
-    user_id  = update.callback_query.from.id
-    username = update.callback_query.from.username
+  if (update.callback_query) t = "button"
+  if (update.edited_message) t = "edited_message"
+  if (update.message)        t = "message"
+  if (t == null) return;
 
-    if (!verify_privs(user_id)) {
-      sendMessage(`Sorry. You're not in the list`, chat_id)
-      sendMessage(`@${username} [${user_id}] has knocked the door.`, admins)
-      return
-    }
+  switch (t) {
+    case "button" :
+      chat_id  = update.callback_query.message.chat.id
+      user_id  = update.callback_query.from.id
+      username = update.callback_query.from.username
+      
+      if (!verify_privs(user_id)) { return; }
 
-    const callback_q = update.callback_query
+      message = processCallbackQueryUpdate(update.callback_query, chat_id)
+      break;
+      
+    case "message" :
+      chat_id  = update.message.chat.id
+      user_id  = update.message.from.id
+      mssg_id  = update.message.message_id
+      username = update.message.from.username
 
-    const msg = processCallbackQueryUpdate(callback_q, chat_id)
-    if (msg !== null) sendMessage(msg, chat_id)
-    return
+      if (!verify_privs(user_id)) {
+        sendMessage(`@${username} [${user_id}] has knocked the door.`, admins)
+        return
+      }
+
+      if (verbosity == "0") setEmojiReaction("👍", mssg_id, chat_id)
+
+      const updateText = update.message.text
+
+      if (!updateText || updateText.toString().trim().length === 0) {
+        sendMessage(`Huh?`, chat_id)
+        return;
+      }
+
+      message = processTextUpdate(updateText, mssg_id, user_id)
+      break;
+
+    case "edited_message": 
+      chat_id  = update.edited_message.chat.id
+      user_id  = update.edited_message.from.id
+      mssg_id  = update.edited_message.message_id
+      username = update.edited_message.from.username
+
+      /** todo */
   }
 
-  if (update.message){
-    chat_id  = update.message.chat.id
-    user_id  = update.message.from.id
-    mssg_id  = update.message.message_id
-    username = update.message.from.username
-
-    if (!verify_privs(user_id)) {
-      sendMessage(`Sorry. You're not in the list`, chat_id)
-      sendMessage(`@${username} [${user_id}] has knocked the door.`, admins)
-      return
-    } /*else {
-      sendMessage(`* ${username} [${user_id}], You are in the list!!`, chat_id)
-    }*/
-
-    const updateText = update.message.text
-
-    if (!updateText || updateText.toString().trim().length === 0) {
-      sendMessage(`Huh?`, chat_id)
-      return;
-    }
-
-    message = processTextUpdate(updateText, mssg_id, user_id)
-  }
-
-  console.log(`r: ${message}.`)
-
-  if (message === null) sendMessage("huh?", chat_id)
-  else {
-    if (verbosity == "1") sendMessage(message, chat_id)
-    else setEmojiReaction("👍", mssg_id, chat_id)
-  } 
-
+  if (verbosity != "0" && message != null) sendMessage(message, chat_id)
 }
 
 function processTextUpdate(prompt, mssg_id, user_id) {
   // here will come the magik!
   console.log("processing update")
-  const re_expend = /[+-]?([0-9]*[.])?[0-9]+,.+,?.*/
-  var m = prompt.match(re_expend)
 
-  if (m !== null) return processExpenditure(prompt, mssg_id, user_id)
-  
   const re_shoplist = /\/\bshop(add|clear|list|){1}\b(\s)*(\w)*/
-  m = prompt.match(re_shoplist)
+  var m = prompt.match(re_shoplist)
 
   console.log("proceding with shoplist processing")
   if (m !== null) {
@@ -95,13 +119,22 @@ function processTextUpdate(prompt, mssg_id, user_id) {
   console.log("proceding with todolist processing")
 
   if (m !== null) {
-    const r = processTodolist(prompt)
+    const r = processJournalTodo(prompt, mssg_id, user_id)
 
     if (typeof r == 'string') return r
 
     sendInlineKeyboardMarkup("*To-do*", r, user_id)
     
     return "Toca las opciones para completar las tareas!"
+  }
+
+  const re_comida = /\/\bcomida\b(\s)*(.|\s)*/
+  m = prompt.match(re_comida)
+
+  if (m !== null) {
+    const r = processFood(prompt, mssg_id, user_id)
+
+    return r
   }
 
   const re_verbosity = /\/\bverbosity\b(\s)*(\w){1}/
@@ -113,10 +146,20 @@ function processTextUpdate(prompt, mssg_id, user_id) {
     return "Ok"
   }
 
-  console.log("returning null")
+  const re_export = /\/\bexport\b(\s)*(.|\s)*/
+  m = prompt.match(re_export)
 
+  if (m !== null) return exportJournalOfTheDay()
 
-  return null
+  const re_expend = /\b[+-]?([0-9]*[.])?[0-9]+,.+,?.*/
+  m = prompt.match(re_expend)
+
+  if (m !== null) return processExpenditure(prompt, mssg_id, user_id)
+  
+
+  r = processJournal(prompt, mssg_id, user_id)
+
+  return r
 }
 
 
@@ -124,24 +167,28 @@ function processCallbackQueryUpdate(callback_query, chat_id) {
   var idx = parseInt(callback_query.data)
   var l   = null
 
-  if (callback_query.message.text == "To-do") {
-    tododel(idx)
-    l = todo("")
+  switch (callback_query.message.text) {
+    case "To-do" :
+      processTodoToggle(idx)
+      l = processJournalTodo("")
+      break;
+
+    case "Shopping":
+      shopdel(idx)
+      l = shop("");
+      break;
+
+    default:
+      return "huh??"
   }
 
-  if (callback_query.message.text == "Shopping") {
-    shopdel(idx)
-    l = shop("")
-  }
+  editInlineKeyboardMarkup(
+    callback_query.message.message_id,
+    typeof l == 'string' ? [] : l,
+    chat_id
+  )
 
-  if (typeof l == 'string') {
-    editInlineKeyboardMarkup(callback_query.message.message_id, [], chat_id)
-    return l
-  }
-
-  editInlineKeyboardMarkup(callback_query.message.message_id, l, chat_id)
-
-  return null
+  return typeof l == 'string' ? l : null
 }
 
 
@@ -341,8 +388,38 @@ function setEmojiReaction(react, message_id, chat_id) {
 }
 
 
+function sendDocument(file, caption, chat_id) {
+  const fileBlob = file.getBlob()
+  const options = {
+    method: 'POST',
+    payload: {
+      chat_id,
+      document: fileBlob,
+      caption: caption,
+    }
+  }
+
+  const response = UrlFetchApp.fetch(url+"/sendDocument", options)
+  //const responde = UrlFetchApp.fetch(url+"/sendDocument?chad_id="+chat_id+"&document="+file_url)
+  const content = response.getContentText()
+  
+  if (!response.getResponseCode().toString().startsWith('2')) {
+    console.log(content);
+  }
+
+  return ContentService.createTextOutput('OK').setMimeType(
+    ContentService.MimeType.TEXT
+  )
+}
+
+
 function test_sendInlineKeyboardMarkup() {
   sendInlineKeyboardMarkup("test", admins)
+}
+
+function test_scripturl() {
+  console.log(ScriptApp.getService().getUrl())
+  console.log(ScriptApp.getScriptId())
 }
 
 
@@ -368,8 +445,7 @@ function registerWebhook() {
     },
     muteHttpExceptions: true,
     payload: JSON.stringify({
-      //url: ScriptApp.getService().getUrl(),
-      url: "https://script.google.com/macros/s/AKfycbyHi_pDCjpyXuD2jfsHg67X_k6q_vwnGHSE0wSZrOk2e58b0IThyEP9ZlyOHJJECkBLXg/exec",
+      url: ScriptApp.getService().getUrl(),
       allowed_updates: ["message", "edited_channel_post", "callback_query", "message_reaction", "edited_message"]
     }),
   }
